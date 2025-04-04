@@ -1,0 +1,46 @@
+/* Default style for all <a> elements */
+a {
+    color: var(--theme-link);
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: var(--theme-link-hover);
+    text-decoration: underline;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+// Tab styling
+.v-tab {
+    text-transform: none;
+    font-weight: normal;
+}
+
+.v-tab.v-tab--active {
+    font-weight: bold;
+}
+
+// New table content style
+.table-content {
+    font-size: 13px;
+}
+
+// Custom v-chip styling
+.v-chip {
+    height: 20px; /* Smaller height (default is 32px) */
+    padding: 0 6px; /* Reduced padding (default is 0 12px) */
+    .v-chip__content {
+      font-size: 11px; /* Smaller font size (default is 14px) */
+    }
+}
+
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

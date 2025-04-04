@@ -1,0 +1,33 @@
+@import '~@/styles/vars.less';
+@import '~@/styles/global.less'; /* Import global styles */
+
+html,
+body {
+  height: 100%;
+  min-height: 100vh;
+  margin: 0; // Ensure no default margins
+}
+
+#app {
+  height: 100%; // Ensure the app container takes full height
+}
+
+.m-hash-tag {
+  max-width: 200px;
+  display: inline-block;
+}
+
+.m-text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+table {
+  border: 1px solid @border;
+}
+
+.v-layout {
+  min-height: 100%;
+  display: flex; // Ensure v-layout uses flexbox (if needed by your layout component)
+}
