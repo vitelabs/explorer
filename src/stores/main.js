@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia';
-import { useSettingStore } from './setting';
 import Api from '@/api';
 import { DEFAULT_NODE } from '@/utils/consts'; // Import default node URL
 
@@ -11,22 +10,20 @@ export const useMainStore = defineStore('main', {
   getters: {
     getApi(state) {
       if (!state.api) {
-        this.initializeApi(); // Ensure API is initialized
+        this.initializeApi(DEFAULT_NODE); // Use default node
       }
       return state.api;
     },
   },
   actions: {
-    initializeApi() {
-      const settingStore = useSettingStore();
-      const selectedNode = settingStore.selectedNode; // Get the selected node from the setting store
-      if (!selectedNode) {
+    initializeApi(url) {
+      if (!url) {
         console.error('No selected node found. Using default node.');
         this.api = new Api(DEFAULT_NODE); // Use default node
         return;
       }
-      this.api = new Api(selectedNode.url); // Initialize API with the selected node's URL
-      console.log('API reinitialized with URL:', selectedNode.url);
+      this.api = new Api(url); // Initialize API with the selected node's URL
+      console.log('API reinitialized with URL:', url);
     },
     async getHeight() {
       try {

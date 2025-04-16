@@ -8,7 +8,7 @@
           :items="themes"
           label="Theme"
           variant="outlined"
-          @change="updateTheme"
+          @update:modelValue="updateTheme"
         ></v-select>
       </v-col>
       <v-col cols="12" md="6">
@@ -17,7 +17,7 @@
           :items="languages"
           label="Language"
           variant="outlined"
-          @change="updateLanguage"
+          @update:modelValue="updateLanguage"
         ></v-select>
       </v-col>
     </v-row>
@@ -25,53 +25,55 @@
     <p class="text-h6 mt-6">Node Configuration</p>
     <v-row class="mt-4">
       <v-col cols="12">
-        <v-table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>URL</th>
-              <th>Selected</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="node in nodes" :key="node.url">
-              <td>{{ node.name }}</td>
-              <td>{{ node.url }}</td>
-              <td>
-                <v-radio
-                  v-model="selectedNodeUrl"
-                  :value="node.url"
-                  @change="selectNode(node.url)"
-                ></v-radio>
-              </td>
-              <td>
-                <v-btn
-                  text
-                  @click="editNode(node)"
-                  :disabled="isDefaultNode(node)"
-                >
-                  Edit
-                </v-btn>
-                <v-btn
-                  text
-                  color="error"
-                  @click="removeNode(node.url)"
-                  :disabled="isDefaultNode(node)"
-                >
-                  Delete
-                </v-btn>
-                <v-btn
-                  text
-                  color="primary"
-                  @click="diagnoseNode(node)"
-                >
-                  Diagnose
-                </v-btn>
-              </td>
-            </tr>
-          </tbody>
-        </v-table>
+        <v-radio-group
+          v-model="selectedNodeUrl"
+          @update:modelValue="selectNode"
+          :key="selectedNodeUrl"
+        >
+          <v-table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>URL</th>
+                <th>Selected</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="node in nodes" :key="node.url">
+                <td>{{ node.name }}</td>
+                <td>{{ node.url }}</td>
+                <td>
+                  <v-radio :value="node.url"></v-radio>
+                </td>
+                <td>
+                  <v-btn
+                    text
+                    @click="editNode(node)"
+                    :disabled="isDefaultNode(node)"
+                  >
+                    Edit
+                  </v-btn>
+                  <v-btn
+                    text
+                    color="error"
+                    @click="removeNode(node.url)"
+                    :disabled="isDefaultNode(node)"
+                  >
+                    Delete
+                  </v-btn>
+                  <v-btn
+                    text
+                    color="primary"
+                    @click="diagnoseNode(node)"
+                  >
+                    Diagnose
+                  </v-btn>
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
+        </v-radio-group>
       </v-col>
     </v-row>
     <v-row>
@@ -158,9 +160,10 @@
 </template>
 
 <script>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onActivated } from 'vue';
 import { useSettingStore, useNodeStore } from '@/stores';
 import { DEFAULT_NODE, DEFAULT_NODE_WS } from '@/utils/consts';
+import { get } from '@/utils/storage';
 
 export default {
   name: 'SettingPage',
@@ -182,9 +185,21 @@ export default {
     });
 
     const nodes = computed(() => settingStore.nodes);
-    const selectedNodeUrl = computed(() =>
-      nodes.value.find(node => node.selected)?.url
-    );
+    const selectedNodeUrl = ref('');
+
+    // Sync selectedNodeUrl with store on mount and activation
+    const syncSelectedNode = () => {
+      const storedUrl = get('SELECTED_NODE_URL') || settingStore.nodes[0]?.url || '';
+      const storeUrl = settingStore.selectedNode.url;
+      console.log('Syncing selected node - Stored URL:', storedUrl, 'Store URL:', storeUrl);
+      selectedNodeUrl.value = storedUrl; // Prefer local storage to ensure consistency
+      if (storedUrl !== storeUrl) {
+        settingStore.selectNode(storedUrl); // Ensure store is in sync
+      }
+    };
+
+    onMounted(syncSelectedNode);
+    onActivated(syncSelectedNode);
 
     const addNodeDialog = ref(false);
     const editingNode = ref(false);
@@ -210,7 +225,7 @@ export default {
 
     const validateUrl = () => {
       const urlPattern = /^(http|https|ws|wss):\/\/.+/;
-      urlError.value = urlPattern.test(nodeForm.value.url)
+      urlError.value = nodeForm.value.url && urlPattern.test(nodeForm.value.url)
         ? ''
         : 'Invalid URL. Must start with http, https, ws, or wss.';
     };
@@ -240,13 +255,12 @@ export default {
     };
 
     const removeNode = url => {
-      const node = nodes.value.find(n => n.url === url);
-      if (isDefaultNode(node)) return;
       settingStore.removeNode(url);
     };
 
     const selectNode = url => {
       settingStore.selectNode(url);
+      selectedNodeUrl.value = url; // Ensure local ref is updated
     };
 
     const isDefaultNode = node => {
